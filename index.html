@@ -1,0 +1,590 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Gym Finity Pro</title>
+
+  <!-- ICONO DEL NAVEGADOR -->
+  <link rel="icon" type="image/png" href="./LOG.png">
+
+  <!-- CONFIGURACIÓN PWA -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#000000">
+
+  <!-- ICONO PARA IPHONE -->
+  <link rel="apple-touch-icon" href="./LOG.png">
+
+  <!-- LIBRERÍAS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap');
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #020202;
+      color: #f8fafc;
+      overflow-x: hidden;
+    }
+
+    @keyframes logoPulse {
+      0%, 100% {
+        filter: drop-shadow(0 0 15px rgba(0, 229, 255, 0.9))
+                drop-shadow(0 0 30px rgba(255, 215, 0, 0.7));
+        transform: scale(1);
+      }
+      50% {
+        filter: drop-shadow(0 0 25px rgba(0, 229, 255, 1))
+                drop-shadow(0 0 60px rgba(255, 215, 0, 1));
+        transform: scale(1.03);
+      }
+    }
+
+    .logo-hero-glow {
+      animation: logoPulse 3s infinite ease-in-out;
+    }
+
+    /* NEÓN INTENSO Y PROFUNDIDAD */
+    .inner-depth {
+      background: #060606;
+      box-shadow:
+        inset 0 0 10px rgba(255, 215, 0, 0.05),
+        inset 5px 5px 10px #020202,
+        inset -5px -5px 10px #0a0a0a;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-depth {
+      box-shadow: 0 0 15px currentColor, 4px 4px 8px #010101, -4px -4px 8px #111;
+      transition: all 0.2s ease;
+    }
+
+    .btn-depth:active {
+      box-shadow: inset 4px 4px 8px rgba(0,0,0,0.9);
+      transform: translateY(2px);
+    }
+
+    /* INPUTS BRILLANTES */
+    .input-gym {
+      background: #050505;
+      border: 1px solid #27272a;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
+    }
+
+    .input-gym:focus {
+      border-color: #00e5ff;
+      box-shadow: 0 0 25px rgba(0,229,255,0.4),
+                  inset 2px 2px 5px rgba(0,0,0,0.5);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    /* EFECTO DE LAS TARJETAS DE PLANES */
+    .transparent-plan-card {
+      transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      background: var(--plan-color-alpha) !important;
+      border: 1px solid var(--plan-color) !important;
+      box-shadow: 0 0 8px var(--plan-shadow) !important;
+    }
+
+    .transparent-plan-card:hover {
+      transform: translateY(-12px) scale(1.03);
+      box-shadow: 0 0 20px var(--plan-color),
+                  inset 0 0 10px var(--plan-shadow-inset) !important;
+      background: linear-gradient(
+        145deg,
+        var(--plan-color-alpha) 0%,
+        rgba(5,5,5,0.95) 100%
+      ) !important;
+      z-index: 20;
+    }
+
+    /* TEXTURA METÁLICA */
+    .metallic-bg {
+      background-color: var(--plan-color);
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.8),
+                  inset 0 0 20px rgba(255,255,255,0.4);
+      position: absolute;
+      inset: 0;
+      z-index: -10;
+    }
+
+    .metallic-shine {
+      position: absolute;
+      top: -100%;
+      left: -100%;
+      width: 300%;
+      height: 300%;
+      background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        rgba(255,255,255,0.8) 45deg,
+        transparent 90deg,
+        transparent 180deg,
+        rgba(255,255,255,0.8) 225deg,
+        transparent 270deg,
+        transparent 360deg
+      );
+      animation: spinMetalShine 5s linear infinite;
+      mix-blend-mode: overlay;
+    }
+
+    .metallic-texture {
+      position: absolute;
+      inset: 0;
+      background: repeating-radial-gradient(
+        circle at 50% 50%,
+        rgba(0,0,0,0.1) 0,
+        rgba(0,0,0,0.1) 1px,
+        transparent 1px,
+        transparent 2.5px
+      );
+      z-index: 2;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+
+    @keyframes spinMetalShine {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .metal-text-shadow {
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.9),
+                   0 0 15px rgba(0,0,0,1);
+    }
+
+    /* ANIMACIONES GENERALES */
+    @keyframes letterWave {
+      0% {
+        transform: scale(1) translateY(0);
+        filter: brightness(1) drop-shadow(0 0 2px rgba(0,0,0,0.5));
+      }
+      30% {
+        transform: scale(1.25) translateY(-6px);
+        filter: brightness(1.5) drop-shadow(0 0 25px currentColor);
+      }
+      100% {
+        transform: scale(1) translateY(0);
+        filter: brightness(1.2) drop-shadow(0 0 15px currentColor);
+      }
+    }
+
+    .letter-anim {
+      display: inline-block;
+      animation: letterWave 1.5s both ease-in-out;
+      transform-origin: bottom center;
+    }
+
+    .delay-1 { animation-delay: 0.1s; color: #FFD700; }
+    .delay-2 { animation-delay: 0.2s; color: #FFD700; }
+    .delay-3 { animation-delay: 0.3s; color: #FFD700; }
+    .delay-4 { animation-delay: 0.4s; color: #00e5ff; }
+    .delay-5 { animation-delay: 0.5s; color: #00e5ff; }
+    .delay-6 { animation-delay: 0.6s; color: #00e5ff; }
+    .delay-7 { animation-delay: 0.7s; color: #00e5ff; }
+    .delay-8 { animation-delay: 0.8s; color: #00e5ff; }
+    .delay-9 { animation-delay: 0.9s; color: #00e5ff; }
+
+    @keyframes textGlowFlow {
+      0%, 100% {
+        text-shadow: 0 0 10px rgba(255,255,255,0.3);
+      }
+      50% {
+        text-shadow: 0 0 20px rgba(255,255,255,0.9),
+                     0 0 30px rgba(0,229,255,0.6);
+      }
+    }
+
+    .glow-text-anim {
+      animation: textGlowFlow 3s infinite ease-in-out;
+    }
+
+    /* ANIMACIÓN NEÓN DE WHATSAPP */
+    @keyframes waNeon {
+      0% {
+        filter: drop-shadow(0 0 8px #25D366);
+        color: #25D366;
+        border-color: #25D366;
+        background-color: rgba(37,211,102,0.15);
+      }
+      33% {
+        filter: drop-shadow(0 0 12px #00e5ff);
+        color: #00e5ff;
+        border-color: #00e5ff;
+        background-color: rgba(0,229,255,0.15);
+      }
+      66% {
+        filter: drop-shadow(0 0 12px #FFD700);
+        color: #FFD700;
+        border-color: #FFD700;
+        background-color: rgba(255,215,0,0.15);
+      }
+      100% {
+        filter: drop-shadow(0 0 8px #25D366);
+        color: #25D366;
+        border-color: #25D366;
+        background-color: rgba(37,211,102,0.15);
+      }
+    }
+
+    /* BOTÓN WHATSAPP */
+    .btn-whatsapp {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      z-index: 9999;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      text-decoration: none;
+      border: 2px solid;
+      animation: waNeon 4s infinite alternate;
+      backdrop-filter: blur(8px);
+      transition: transform 0.3s ease;
+    }
+
+    .btn-whatsapp:hover {
+      transform: scale(1.15) rotate(10deg);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scaleUp {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes slideDownPopup {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOutLoader {
+      to {
+        opacity: 0;
+        visibility: hidden;
+        z-index: -1;
+      }
+    }
+
+    @keyframes floatEmpty {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    .animate-scale-up {
+      animation: scaleUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    .animate-popup {
+      animation: slideDownPopup 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    .hide-loader {
+      animation: fadeOutLoader 0.6s ease-out forwards;
+    }
+
+    .animate-float {
+      animation: floatEmpty 4s ease-in-out infinite;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #050505;
+      border-radius: 10px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 10px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #00e5ff;
+    }
+
+    /* =========================================
+       ANIMACIÓN LETRA POR LETRA: GYM FINITY PRO
+       ========================================= */
+
+    .logo-gym,
+    .logo-finity {
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .logo-letter {
+      display: inline-block;
+      transform-origin: center bottom;
+      animation: letterWaveSlow 10s infinite ease-in-out;
+      will-change: transform, filter, text-shadow;
+    }
+
+    /* GYM EN DORADO */
+    .logo-gym .logo-letter {
+      color: #eab308;
+      text-shadow: 0 0 4px rgba(234,179,8,0.2);
+    }
+
+    /* FINITY EN CIAN */
+    .logo-finity .logo-letter {
+      color: #06b6d4;
+      text-shadow: 0 0 4px rgba(6,182,212,0.2);
+    }
+
+    @keyframes letterWaveSlow {
+      0%, 8%, 100% {
+        transform: translateY(0) scale(1);
+        filter: brightness(1);
+        text-shadow: 0 0 3px currentColor;
+      }
+      3% {
+        transform: translateY(-2px) scale(1.08);
+        filter: brightness(1.65);
+        text-shadow: 0 0 8px currentColor, 0 0 16px currentColor;
+      }
+    }
+
+    /* RETRASOS DE LA OLA */
+    .logo-gym .logo-letter:nth-child(1) { animation-delay: 0s; }
+    .logo-gym .logo-letter:nth-child(2) { animation-delay: 0.2s; }
+    .logo-gym .logo-letter:nth-child(3) { animation-delay: 0.4s; }
+
+    .logo-finity .logo-letter:nth-child(1) { animation-delay: 0.6s; }
+    .logo-finity .logo-letter:nth-child(2) { animation-delay: 0.8s; }
+    .logo-finity .logo-letter:nth-child(3) { animation-delay: 1s; }
+    .logo-finity .logo-letter:nth-child(4) { animation-delay: 1.2s; }
+    .logo-finity .logo-letter:nth-child(5) { animation-delay: 1.4s; }
+    .logo-finity .logo-letter:nth-child(6) { animation-delay: 1.6s; }
+
+    /* INSIGNIA PRO */
+    .logo-pro {
+      color: #06b6d4;
+      border: 1px solid rgba(6,182,212,0.5);
+      border-radius: 9999px;
+      padding: 2px 10px;
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: transparent;
+      transform-origin: center;
+      animation: glow-pro 10s infinite ease-in-out;
+      transition: all 0.3s ease;
+      will-change: transform, box-shadow, filter;
+    }
+
+    @keyframes glow-pro {
+      0%, 16%, 100% {
+        box-shadow: 0 0 0 rgba(0,229,255,0);
+        background-color: transparent;
+        color: #06b6d4;
+        border-color: rgba(6,182,212,0.5);
+        transform: scale(1);
+        filter: brightness(1);
+      }
+
+      21% {
+        box-shadow: 0 0 12px rgba(0,229,255,0.7),
+                    0 0 24px rgba(0,229,255,0.4),
+                    inset 0 0 8px rgba(0,229,255,0.25);
+        background-color: rgba(6,182,212,0.16);
+        color: #ffffff;
+        border-color: #06b6d4;
+        transform: scale(1.05);
+        filter: brightness(1.25);
+      }
+
+      25%, 33% {
+        box-shadow: 0 0 16px rgba(0,229,255,0.85),
+                    0 0 30px rgba(0,229,255,0.55),
+                    inset 0 0 10px rgba(0,229,255,0.3);
+        background-color: rgba(6,182,212,0.2);
+        color: #ffffff;
+        border-color: #06b6d4;
+        transform: scale(1.09);
+        filter: brightness(1.4);
+      }
+
+      39% {
+        box-shadow: 0 0 8px rgba(0,229,255,0.4);
+        background-color: rgba(6,182,212,0.07);
+        color: #67e8f9;
+        border-color: rgba(6,182,212,0.5);
+        transform: scale(1.04);
+        filter: brightness(1.12);
+      }
+
+      42% {
+        box-shadow: 0 0 0 rgba(0,229,255,0);
+        background-color: transparent;
+        color: #06b6d4;
+        border-color: rgba(6,182,212,0.5);
+        transform: scale(1);
+        filter: brightness(1);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .logo-letter,
+      .logo-pro {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+      }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col relative">
+
+  <!-- PANTALLA DE CARGA -->
+  <div id="loading-screen"
+       class="fixed inset-0 bg-[#020202] z-[100000] flex flex-col items-center justify-center">
+
+    <div class="relative flex items-center justify-center my-4">
+      <img
+        src="LOGO.jpg"
+        alt="Gym Finity Logo"
+        class="w-64 h-64 md:w-80 md:h-80 rounded-full object-cover logo-hero-glow border-2 border-black"
+        onerror="this.src='https://via.placeholder.com/300?text=GYM+FINITY'"
+      />
+    </div>
+
+    <h1 class="mt-8 text-3xl md:text-5xl font-black tracking-[0.2em] animate-pulse">
+      <span class="text-yellow-400 drop-shadow-[0_0_10px_rgba(255,215,0,0.8)]">GYM</span>
+      <span class="text-cyan-400 drop-shadow-[0_0_10px_rgba(0,229,255,0.8)]">FINITY</span>
+    </h1>
+  </div>
+
+  <!-- NAVEGACIÓN -->
+  <nav class="bg-[#030303]/95 backdrop-blur-md px-4 md:px-6 py-3 flex justify-between items-center sticky top-0 z-50">
+
+    <div class="flex items-center gap-2 md:gap-4">
+
+      <img
+        src="LOGO.jpg"
+        alt="Logo Gym Finity"
+        class="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover logo-hero-glow cursor-pointer transition hover:scale-105 shrink-0"
+        onclick="location.reload()"
+        onerror="this.src='https://via.placeholder.com/150?text=GF'"
+      />
+
+      <div class="flex items-center">
+
+        <!-- LOGO ANIMADO -->
+        <div class="flex items-center gap-1.5 md:gap-2">
+
+          <h1 class="text-sm sm:text-lg md:text-2xl font-black uppercase tracking-wider flex items-center gap-1 cursor-default select-none">
+
+            <span class="logo-gym" aria-label="GYM">
+              <span class="logo-letter">G</span><span class="logo-letter">Y</span><span class="logo-letter">M</span>
+            </span>
+
+            <span class="logo-finity" aria-label="FINITY">
+              <span class="logo-letter">F</span><span class="logo-letter">I</span><span class="logo-letter">N</span><span class="logo-letter">I</span><span class="logo-letter">T</span><span class="logo-letter">Y</span>
+            </span>
+
+          </h1>
+
+          <span class="logo-pro">PRO</span>
+
+        </div>
+      </div>
+    </div>
+
+    <div id="nav-actions" class="flex gap-2 md:gap-3 items-center"></div>
+
+  </nav>
+
+  <!-- NOTIFICACIONES -->
+  <div id="toast-container"
+       class="fixed top-24 left-0 right-0 z-[60] flex justify-center pointer-events-none"></div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main id="app-content"
+        class="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto"></main>
+
+  <!-- MODAL -->
+  <div id="app-modal"
+       class="fixed inset-0 bg-[#000]/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-all overflow-y-auto">
+
+    <div id="modal-content"
+         class="card-depth w-full max-w-md rounded-[2rem] p-8 relative shadow-2xl my-auto border border-zinc-800/80"></div>
+
+  </div>
+
+  <!-- BOTÓN FLOTANTE DE WHATSAPP -->
+  <a href="https://wa.me/573195335508"
+     target="_blank"
+     rel="noopener noreferrer"
+     class="btn-whatsapp"
+     aria-label="Contactar por WhatsApp">
+
+    <i class="fa-brands fa-whatsapp"></i>
+
+  </a>
+
+  <!-- PIE DE PÁGINA -->
+  <footer class="bg-[#020202] border-t border-zinc-900/50 py-8 text-center text-sm text-zinc-600 mt-auto">
+    Gym Finity &copy; 2026 - PRO VERSION - JOZZ
+  </footer>
+
+  <!-- LIBRERÍAS DE FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+  <!-- CÓDIGO PRINCIPAL DE LA APLICACIÓN -->
+  <script src="./app.js"></script>
+
+  <!-- REGISTRO DEL SERVICE WORKER PARA LA PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        try {
+          const registration = await navigator.serviceWorker.register('./sw.js', {
+            scope: './'
+          });
+
+          console.log(
+            'GYM FINITY PRO: Service Worker registrado correctamente.',
+            registration.scope
+          );
+        } catch (error) {
+          console.error(
+            'GYM FINITY PRO: Error al registrar el Service Worker:',
+            error
+          );
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
