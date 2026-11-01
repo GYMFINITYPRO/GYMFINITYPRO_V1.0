@@ -94,7 +94,7 @@ const storeProducts = [
     { brand: "VITANAS", 
         type: "Proteínas", 
         name: "Proteína Army 2LB", 
-        img: "PRODUCTOS/VITANAS/VITANAS_Army_VAINILLA_2LB.png", 
+        img: "PRODUCTOS/VITANAS/VITANAS_ARMY_VAINILLA_2LB.png", 
         desc: "Vitanas Army (Vainilla - 2 lb): Proteína de alta calidad sabor a vainilla, ideal para acelerar la recuperación muscular y optimizar tus resultados diarios.", 
         price: "$205.000", 
         },
