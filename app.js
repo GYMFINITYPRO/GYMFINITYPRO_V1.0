@@ -186,7 +186,7 @@ const storeProducts = [
 
     { brand: "TNT", 
         type: "Creatinas", 
-        name: "Creatina Monohidratada 200 Serv - 600g", 
+        name: "TNT Creatina Monohidratada 200 Serv - 600g", 
         img: "PRODUCTOS/TNT/TNT_CREATINA_MONOHIDRATADA_200S.png", 
         desc: "Creatina Monohidratada (600g - 200 serv): Creatina pura en formato rinde-más para potenciar tu fuerza, potencia muscular y rendimiento en cada entrenamiento.", 
         price: "$150.000", 
