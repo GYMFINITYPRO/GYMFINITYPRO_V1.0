@@ -94,7 +94,7 @@ const storeProducts = [
     { brand: "VITANAS", 
         type: "Proteínas", 
         name: "Proteína Army 2LB", 
-        img: "PRODUCTOS/VITANAS/VITANAS_ARMY_VAINILLA_2LB.png", 
+        img: "PRODUCTOS/VITANAS/VITANAS_Army_VAINILLA_2LB.png", 
         desc: "Vitanas Army (Vainilla - 2 lb): Proteína de alta calidad sabor a vainilla, ideal para acelerar la recuperación muscular y optimizar tus resultados diarios.", 
         price: "$205.000", 
         },
@@ -718,6 +718,20 @@ function repairRoutineTemplates() {
     });
     if (changed) localStorage.setItem('gym_routine_templates', JSON.stringify(state.routineTemplates));
 }
+
+// Actualiza (en memoria) las imágenes de un plan ya guardado usando el diccionario actual de ejercicios
+window.refreshWorkoutImages = function(workout) {
+    if (!Array.isArray(workout)) return;
+    workout.forEach(day => {
+        (day.exercises || []).forEach(ex => {
+            if (!ex || !ex.name) return;
+            const r = (exerciseDetails[ex.name] && exerciseDetails[ex.name].img)
+                ? { img: exerciseDetails[ex.name].img }
+                : resolveExerciseByKey(ex.name);
+            if (r.img && !r.img.includes('default.png')) ex.img = r.img;
+        });
+    });
+};
 
 // ==========================================
 // INICIALIZACIÓN Y CARGA DESDE LA NUBE
@@ -2160,6 +2174,8 @@ function renderClientPortal() {
   if (!clientData) return `<p class="p-8 text-zinc-400 text-center font-bold">Sin registros.</p>`;
 
   const { bia, workout, name, date, days, dueDate, profilePic, plan } = clientData;
+  // Los planes guardados conservan rutas de imagen antiguas: se actualizan con las del diccionario actual
+  refreshWorkoutImages(workout);
   const daysLeft = Math.ceil((new Date(dueDate) - new Date()) / (1000 * 60 * 60 * 24));
   const isExpired = daysLeft < 0;
   
@@ -4512,6 +4528,23 @@ window.setTypeFilter = function(type) {
     renderProductsGrid();
 };
 
+// Reduce el tamaño del nombre de la marca hasta que quepa completo en su tarjeta
+window.fitBrandName = function() {
+    const fit = () => {
+        const el = document.getElementById('brand-name-fit');
+        if (!el || !el.parentElement) return;
+        const avail = el.parentElement.clientWidth - 24;
+        let size = parseFloat(getComputedStyle(el).fontSize);
+        let guard = 30;
+        while (el.scrollWidth > avail && size > 10 && guard-- > 0) {
+            size -= 1;
+            el.style.fontSize = size + 'px';
+        }
+    };
+    requestAnimationFrame(fit);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+};
+
 window.renderBrandCarousel = function() {
     const container = document.getElementById('brand-carousel-container');
     if(!container) return;
@@ -4556,7 +4589,7 @@ window.renderBrandCarousel = function() {
         
         <!-- Flecha Izquierda (Punta hueca encajando con Diamante, copia 100% exacta) -->
         <button onclick="changeBrandCarousel(-1, true)" class="transition-transform hover:scale-110 z-20 shrink-0 group neon-arrow" style="color: ${activeColor};">
-            <svg viewBox="0 0 50 30" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" class="w-12 h-12 md:w-16 md:h-16">
+            <svg viewBox="0 0 50 30" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" class="w-8 h-8 md:w-16 md:h-16">
                 <!-- Punta de flecha izquierda -->
                 <polygon points="26,3 4,15 26,27 20,15" />
                 <!-- Diamante derecho -->
@@ -4564,7 +4597,7 @@ window.renderBrandCarousel = function() {
             </svg>
         </button>
 
-        <div class="flex items-center justify-center w-full gap-2 md:gap-4 overflow-hidden perspective-1000" 
+        <div class="flex items-center justify-center w-full min-w-0 gap-2 md:gap-4 overflow-hidden perspective-1000" 
              onmouseenter="stopBrandCarousel()" 
              onmouseleave="startBrandCarousel()">
             
@@ -4574,9 +4607,9 @@ window.renderBrandCarousel = function() {
             </div>
 
             <!-- MARCA CENTRAL -->
-            <div class="animate-swap w-3/4 md:w-1/2 h-32 md:h-40 bg-[#0a0a0a] border-4 flex flex-col items-center justify-center rounded-2xl z-10 transition-all relative overflow-hidden group" style="border-color: ${activeColor}; box-shadow: 0 0 25px ${activeColor}30;">
+            <div class="animate-swap w-full md:w-1/2 min-w-0 h-28 md:h-40 bg-[#0a0a0a] border-4 flex flex-col items-center justify-center rounded-2xl z-10 transition-all relative overflow-hidden group px-2" style="border-color: ${activeColor}; box-shadow: 0 0 25px ${activeColor}30;">
                 <div class="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500 blur-2xl" style="background-color: ${activeColor};"></div>
-                <span class="text-soft-neon font-black text-3xl md:text-4xl relative z-10 tracking-widest">${centerBrand}</span>
+                <span id="brand-name-fit" class="text-soft-neon font-black relative z-10 text-center" style="font-size: clamp(1.1rem, 6vw, 2.25rem); letter-spacing: 0.06em; max-width: 100%; white-space: nowrap;">${centerBrand}</span>
             </div>
 
             <!-- MARCA DERECHA -->
@@ -4587,7 +4620,7 @@ window.renderBrandCarousel = function() {
 
         <!-- Flecha Derecha (Diamante encajando con Punta hueca, copia 100% exacta) -->
         <button onclick="changeBrandCarousel(1, true)" class="transition-transform hover:scale-110 z-20 shrink-0 group neon-arrow" style="color: ${activeColor};">
-            <svg viewBox="0 0 50 30" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" class="w-12 h-12 md:w-16 md:h-16">
+            <svg viewBox="0 0 50 30" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" class="w-8 h-8 md:w-16 md:h-16">
                 <!-- Diamante izquierdo -->
                 <polygon points="4,15 14,9 24,15 14,21" />
                 <!-- Punta de flecha derecha -->
@@ -4595,6 +4628,7 @@ window.renderBrandCarousel = function() {
             </svg>
         </button>
     `;
+    fitBrandName();
     renderTypeFilters();
     renderProductsGrid();
     
@@ -4947,6 +4981,7 @@ window.renderAdminRoutines = function() {
         </div>
     </div>`;
 };
+
 window.openAddObjectiveModal = function() {
     openModal(`
         <div class="bg-[#050505] border border-purple-500/50 rounded-[2rem] p-6 max-w-sm mx-auto w-full shadow-2xl relative animate-scale-up">
@@ -4993,55 +5028,91 @@ window.editTemplate = function(index) {
     renderTemplateEditor();
 };
 
+// Quita palabras repetidas ("Series", "Reps") porque la etiqueta ya las indica
+function tplVal(v) { return String(v == null ? '' : v).replace(/\s*(series|serie|reps|rep|repeticiones)\.?\s*$/i, '').trim(); }
+
 window.renderTemplateEditor = function() {
     const tpl = currentTemplateBuilder;
-    const safeAttr = (v) => String(v || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    const totalEx = tpl.workout.reduce((acc, d) => acc + d.exercises.length, 0);
 
     let html = `
-        <div class="bg-[#050505] border border-purple-500/50 rounded-[2rem] p-5 md:p-10 w-full max-w-5xl mx-auto shadow-2xl relative animate-scale-up max-h-[92vh] overflow-y-auto custom-scrollbar">
-            <button onclick="closeModal()" class="absolute top-4 right-4 w-11 h-11 bg-zinc-900 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition z-10"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <style>
+            .tpl-day { display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:16px; background:linear-gradient(90deg, rgba(168,85,247,.25), rgba(168,85,247,.08) 60%, transparent); border:1px solid rgba(168,85,247,.4); box-shadow:0 0 15px rgba(168,85,247,.12); }
+            .tpl-day-num { flex:0 0 44px; width:44px; height:44px; border-radius:12px; background:#a855f7; color:#fff; font-weight:900; font-size:18px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px rgba(168,85,247,.4); }
+            .tpl-day-info { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
+            .tpl-day-name { margin:0; width:100%; color:#fff; font-weight:900; text-transform:uppercase; letter-spacing:.03em; font-size:18px; line-height:1.2; word-break:normal; overflow-wrap:break-word; }
+            .tpl-day-count { font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.1em; color:#d8b4fe; background:rgba(168,85,247,.12); border:1px solid rgba(168,85,247,.35); padding:3px 10px; border-radius:999px; white-space:nowrap; }
+            .tpl-row { display:grid; grid-template-columns: 76px minmax(0,1fr) 44px; grid-template-areas: "img name del" "stats stats stats"; column-gap:12px; row-gap:12px; align-items:center; background:#050505; border:1px solid rgba(63,63,70,.8); border-left:4px solid #a855f7; border-radius:12px; padding:12px; transition:border-color .2s; }
+            .tpl-row:hover { border-color:#71717a; border-left-color:#a855f7; }
+            .tpl-img { grid-area:img; width:76px; height:76px; background:#fff; border-radius:12px; padding:4px; display:flex; align-items:center; justify-content:center; border:1px solid #e4e4e7; }
+            .tpl-img img { width:100%; height:100%; object-fit:contain; mix-blend-mode:multiply; }
+            .tpl-name { grid-area:name; align-self:center; min-width:0; color:#fff; font-weight:900; text-transform:uppercase; font-size:14px; line-height:1.25; word-break:normal; overflow-wrap:break-word; }
+            .tpl-stats { grid-area:stats; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+            .tpl-stat { min-width:0; background:#0a0a0a; border:1px solid #3f3f46; border-radius:10px; padding:8px 6px; text-align:center; }
+            .tpl-stat-main { border-color:rgba(168,85,247,.45); }
+            .tpl-stat span { display:block; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; color:#a1a1aa; white-space:nowrap; }
+            .tpl-stat-main span { color:#d8b4fe; }
+            .tpl-stat b { display:block; font-size:15px; font-weight:900; color:#fff; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+            .tpl-del { grid-area:del; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:rgba(127,29,29,.3); border:1px solid rgba(239,68,68,.5); color:#f87171; border-radius:10px; cursor:pointer; transition:all .2s; }
+            .tpl-del:hover { background:#dc2626; color:#fff; }
+        </style>
+        <div class="bg-[#050505] border border-purple-500/40 rounded-[2rem] w-full max-w-5xl mx-auto shadow-2xl relative animate-scale-up max-h-[92vh] overflow-y-auto overflow-x-hidden custom-scrollbar">
 
-            <div class="border-b border-zinc-800/80 pb-5 mb-6 pr-12">
-                <h3 class="text-2xl md:text-4xl font-black uppercase tracking-wider text-purple-400 drop-shadow-md leading-tight">
-                    ${tpl.objective}
-                </h3>
-                <p class="text-sm md:text-base text-zinc-400 font-bold tracking-widest mt-2">ESTRUCTURA DE ${tpl.days} DÍAS</p>
+            <!-- ENCABEZADO -->
+            <div class="sticky top-0 z-20 bg-[#050505]/95 backdrop-blur-md border-b border-zinc-800/80 px-5 md:px-8 py-5 flex items-start justify-between gap-4 rounded-t-[2rem]">
+                <div class="min-w-0">
+                    <p class="text-[11px] font-black text-zinc-500 uppercase tracking-[0.25em] mb-1">Plantilla de rutina</p>
+                    <h3 class="text-2xl md:text-3xl font-black uppercase tracking-wide text-purple-400 leading-tight break-words">${tpl.objective}</h3>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <span class="inline-flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-full"><i class="fa-solid fa-calendar-days"></i> ${tpl.days} días</span>
+                        <span class="inline-flex items-center gap-1.5 bg-zinc-900 border border-zinc-700 text-zinc-300 text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-full"><i class="fa-solid fa-dumbbell"></i> ${totalEx} ejercicios</span>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="w-11 h-11 shrink-0 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
-            <div class="space-y-6">
+            <!-- DÍAS -->
+            <div class="p-4 md:p-8 space-y-8">
                 ${tpl.workout.map((dayObj, dIdx) => `
-                    <div class="bg-[#0a0a0a] border border-zinc-800 rounded-2xl p-4 md:p-6 relative group">
-                        <div class="mb-4">
-                            <label class="block text-[11px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Nombre del día</label>
-                            <input type="text" value="${safeAttr(dayObj.day)}" onchange="updateTemplateDayName(${dIdx}, this.value)" class="w-full bg-[#050505] border border-zinc-700 focus:border-purple-500 rounded-xl px-4 py-3 text-white font-black text-lg md:text-xl outline-none transition" placeholder="Ej. Día 1: Pecho">
+                    <section class="space-y-3">
+
+                        <!-- BARRA DEL DÍA -->
+                        <div class="tpl-day">
+                            <div class="tpl-day-num">${dIdx + 1}</div>
+                            <div class="tpl-day-info">
+                                <h4 class="tpl-day-name">${dayObj.day}</h4>
+                                <span class="tpl-day-count">${dayObj.exercises.length} ${dayObj.exercises.length === 1 ? 'ejercicio' : 'ejercicios'}</span>
+                            </div>
                         </div>
 
-                        <div class="space-y-3 mb-4">
-                            ${dayObj.exercises.length === 0 ? `<div class="text-sm text-zinc-600 font-medium italic">Sin ejercicios agregados.</div>` : ''}
-                            ${dayObj.exercises.map((ex, eIdx) => `
-                                <div class="bg-[#030303] border border-zinc-800 p-3 md:p-4 rounded-xl flex items-center justify-between gap-3 group/ex">
-                                    <div class="flex items-center gap-4 min-w-0">
-                                        <div class="w-20 h-20 md:w-24 md:h-24 bg-white rounded-xl p-1.5 shrink-0"><img src="${ex.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="this.src='ejercicios/default.png'"></div>
-                                        <div class="min-w-0">
-                                            <p class="text-sm md:text-base font-black text-white uppercase leading-tight">${ex.name}</p>
-                                            <p class="text-xs md:text-sm text-zinc-400 font-bold uppercase tracking-wider mt-1.5">${ex.sets} | ${ex.reps} | ${ex.rest}</p>
-                                        </div>
-                                    </div>
-                                    <button onclick="removeExerciseFromTemplate(${dIdx}, ${eIdx})" class="w-11 h-11 shrink-0 flex items-center justify-center text-red-400 hover:text-white hover:bg-red-600 rounded-lg bg-red-900/20 border border-red-500/30 transition"><i class="fa-solid fa-trash"></i></button>
+                        <!-- FILAS DE EJERCICIOS (mismo estilo que las carpetas de ejercicios) -->
+                        ${dayObj.exercises.length === 0 ? `<div class="text-sm text-zinc-500 font-medium italic text-center py-4 border border-dashed border-zinc-800 rounded-xl">Aún no hay ejercicios en este día.</div>` : ''}
+                        ${dayObj.exercises.map((ex, eIdx) => `
+                            <article class="tpl-row">
+                                <div class="tpl-img"><img src="${ex.img}" onerror="this.src='ejercicios/default.png'"></div>
+                                <div class="tpl-name">${ex.name}</div>
+                                <div class="tpl-stats">
+                                    <div class="tpl-stat tpl-stat-main"><span>Series</span><b>${tplVal(ex.sets)}</b></div>
+                                    <div class="tpl-stat"><span>Reps</span><b>${tplVal(ex.reps)}</b></div>
+                                    <div class="tpl-stat"><span>Descanso</span><b>${ex.rest}</b></div>
                                 </div>
-                            `).join('')}
-                        </div>
+                                <button onclick="removeExerciseFromTemplate(${dIdx}, ${eIdx})" title="Quitar ejercicio" class="tpl-del"><i class="fa-solid fa-trash"></i></button>
+                            </article>
+                        `).join('')}
 
-                        <button onclick="openFolderPickerForTemplate(${dIdx})" class="w-full py-4 border border-dashed border-zinc-600 text-zinc-300 hover:text-white hover:border-white rounded-xl text-sm md:text-base font-bold transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-plus"></i> Agregar Ejercicio
+                        <button onclick="openFolderPickerForTemplate(${dIdx})" class="w-full py-3.5 border border-dashed border-zinc-600 text-zinc-300 hover:text-white hover:border-purple-400 hover:bg-purple-500/5 rounded-2xl text-sm font-bold transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Agregar ejercicio
                         </button>
-                    </div>
+                    </section>
                 `).join('')}
             </div>
 
-            <button onclick="saveTemplateToState()" class="w-full mt-8 bg-purple-500 text-white font-black uppercase tracking-widest py-5 rounded-xl text-base hover:bg-purple-400 transition shadow-[0_0_15px_rgba(168,85,247,0.3)] flex items-center justify-center gap-2">
-                <i class="fa-solid fa-save"></i> Guardar Rutina
-            </button>
+            <!-- PIE -->
+            <div class="sticky bottom-0 bg-[#050505]/95 backdrop-blur-md border-t border-zinc-800/80 px-5 md:px-8 py-4 rounded-b-[2rem]">
+                <button onclick="saveTemplateToState()" class="w-full bg-purple-500 text-white font-black uppercase tracking-widest py-4 rounded-xl text-sm md:text-base hover:bg-purple-400 transition shadow-[0_0_15px_rgba(168,85,247,0.3)] flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar rutina
+                </button>
+            </div>
         </div>
     `;
     openModal(html);
