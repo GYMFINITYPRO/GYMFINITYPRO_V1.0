@@ -1292,6 +1292,46 @@ function generateAiWorkout(objective, days, level, machines) {
 // ==========================================
 // EXPORTACIÓN A PDF (TARJETA COMPACTA Y TEXTO ACTUALIZADO)
 // ==========================================
+// ==========================================
+// IMÁGENES PARA EL PDF: se convierten a datos incrustados (data URL) antes de generar el PDF
+// así html2canvas no depende de que el navegador cargue cada imagen a tiempo
+// ==========================================
+window.loadImageDataUrl = function(url) {
+    return new Promise(resolve => {
+        const probe = new Image();
+        probe.onload = () => {
+            try {
+                const w = probe.naturalWidth, h = probe.naturalHeight;
+                if (!w || !h) return resolve(null);
+                const k = Math.min(1, 500 / Math.max(w, h));
+                const c = document.createElement('canvas');
+                c.width = Math.max(1, Math.round(w * k));
+                c.height = Math.max(1, Math.round(h * k));
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, c.width, c.height);
+                ctx.drawImage(probe, 0, 0, c.width, c.height);
+                resolve(c.toDataURL('image/jpeg', 0.92));
+            } catch (e) { resolve(null); }
+        };
+        probe.onerror = () => resolve(null);
+        probe.src = url;
+    });
+};
+
+window.inlinePdfImages = function(root) {
+    const imgs = Array.from(root.querySelectorAll('img'));
+    return Promise.all(imgs.map(async img => {
+        const orig = img.getAttribute('src') || '';
+        const tries = [orig].concat(window.gymImgCandidates(orig)).slice(0, 31);
+        for (const u of tries) {
+            const d = await window.loadImageDataUrl(u);
+            if (d) { img.src = d; return; }
+        }
+        img.src = window.GYM_IMG_PLACEHOLDER;
+    }));
+};
+
 window.downloadPDF = function() {
     const clientData = state.viewingClientAsAdmin ? state.selectedClientRecord : (state.clients.find(c => c.cc === state.currentUser.cc) || state.currentUser.record);
     if (!clientData || !clientData.workout) return alert("No hay rutina para descargar.");
@@ -1450,14 +1490,7 @@ window.downloadPDF = function() {
     document.body.style.backgroundColor = '#ffffff'; 
     document.body.appendChild(pdfWrapper);
 
-    const images = pdfWrapper.querySelectorAll('img');
-    const imagePromises = Array.from(images).map(img => new Promise(resolve => {
-        if (img.complete) return resolve();
-        img.onload = resolve;
-        img.onerror = resolve; 
-    }));
-
-    Promise.all(imagePromises).then(() => {
+    inlinePdfImages(pdfWrapper).then(() => {
         window.scrollTo(0, 0); 
 
         html2pdf().set({
