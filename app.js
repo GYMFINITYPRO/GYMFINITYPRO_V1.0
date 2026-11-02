@@ -186,7 +186,7 @@ const storeProducts = [
 
     { brand: "TNT", 
         type: "Creatinas", 
-        name: "TNT Creatina Monohidratada 200 Serv - 600g", 
+        name: "Creatina Monohidratada 200 Serv - 600g", 
         img: "PRODUCTOS/TNT/TNT_CREATINA_MONOHIDRATADA_200S.png", 
         desc: "Creatina Monohidratada (600g - 200 serv): Creatina pura en formato rinde-más para potenciar tu fuerza, potencia muscular y rendimiento en cada entrenamiento.", 
         price: "$150.000", 
@@ -4526,7 +4526,7 @@ window.renderProductsGrid = function() {
                     <p class="text-2xl font-black drop-shadow-md transition-colors duration-300" style="color: ${activeColor};">${p.price}</p>
                     
                     <!-- Botón de WhatsApp dinámico anclado al color de la marca -->
-                    <a href="https://wa.me/573195335508?text=Hola,%20me%20interesa%20el%20producto:%20${encodeURIComponent(p.name)}" target="_blank" 
+                    <a href="https://wa.me/573195335508?text=${encodeURIComponent(waProductMessage(p))}" target="_blank" 
                        class="w-12 h-12 flex items-center justify-center rounded-xl text-xl transition-all duration-300"
                        style="background-color: #0a0a0a; border: 1px solid ${activeColor}50; color: ${activeColor};"
                        onmouseenter="this.style.backgroundColor='${activeColor}'; this.style.color='#000'; this.style.boxShadow='0 0 15px ${activeColor}80'; this.style.borderColor='${activeColor}';"
@@ -4610,6 +4610,12 @@ window.fitBrandName = function() {
     };
     requestAnimationFrame(fit);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+};
+
+// Mensaje de WhatsApp: "Hola, me interesa el producto: Marca - Producto"
+window.waProductMessage = function(p) {
+    const brand = String(p.brand || '').toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
+    return `Hola, me interesa el producto: ${brand} - ${p.name}`;
 };
 
 window.renderBrandCarousel = function() {
