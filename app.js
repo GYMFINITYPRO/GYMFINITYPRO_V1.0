@@ -665,6 +665,18 @@ const exerciseDetails = {
 const customExercises = JSON.parse(localStorage.getItem('gymFinityCustomEx')) || {};
 Object.assign(exerciseDetails, customExercises);
 
+// ALIAS: nombres que usan las rutinas y que en el diccionario tienen otro nombre
+Object.assign(exerciseDetails, {
+    "Press Inclinado con Barra": exerciseDetails["Press Inclinado Barra"],
+    "Fondos en Paralelas": exerciseDetails["Fondos de Pecho"],
+    "Sentadilla Profunda con Barra": exerciseDetails["Sentadilla Libre con Barra"],
+    "Peso Muerto": exerciseDetails["Peso Muerto Convencional"],
+    "Curl Femoral": exerciseDetails["Curl Femoral Acostado"],
+    "Press Hombro": exerciseDetails["Press Militar Hombro"],
+    "Peck Deck": exerciseDetails["Peck Deck Pecho (Mariposa)"],
+    "Abductores": exerciseDetails["Abducción Máquina"]
+});
+
 let progressChartInstance = null;
 let exerciseChartInstance = null;
 
