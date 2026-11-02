@@ -94,7 +94,7 @@ const storeProducts = [
     { brand: "VITANAS", 
         type: "Proteínas", 
         name: "Proteína Army 2LB", 
-        img: "PRODUCTOS/VITANAS/VITANAS_Army_VAINILLA_2LB.png", 
+        img: "PRODUCTOS/VITANAS/VITANAS_ARMY_VAINILLA_2LB.png", 
         desc: "Vitanas Army (Vainilla - 2 lb): Proteína de alta calidad sabor a vainilla, ideal para acelerar la recuperación muscular y optimizar tus resultados diarios.", 
         price: "$205.000", 
         },
@@ -734,6 +734,61 @@ window.refreshWorkoutImages = function(workout) {
 };
 
 // ==========================================
+// IMÁGENES DE EJERCICIOS AUTO-REPARABLES
+// (GitHub Pages distingue mayúsculas/minúsculas; si una ruta falla se prueban variantes)
+// ==========================================
+window.__gymImgOk = window.__gymImgOk || {};
+window.GYM_IMG_PLACEHOLDER = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#ffffff"/><g fill="#a1a1aa"><rect x="14" y="38" width="10" height="24" rx="3"/><rect x="26" y="30" width="10" height="40" rx="3"/><rect x="38" y="46" width="24" height="8"/><rect x="64" y="30" width="10" height="40" rx="3"/><rect x="76" y="38" width="10" height="24" rx="3"/></g></svg>');
+
+window.gymImgCandidates = function(src) {
+    const clean = String(src || '').split('?')[0];
+    const m = clean.match(/^(.*\/)?([^\/]+?)(\.[A-Za-z0-9]+)?$/);
+    if (!m) return [];
+    const dirFull = m[1] || '';
+    const name = m[2];
+    const ext = m[3] || '.png';
+    const dirParts = dirFull.replace(/\/$/, '').split('/');
+    const folder = dirParts[dirParts.length - 1] || '';
+    const base = dirParts.slice(0, -1).join('/');
+    const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+
+    const folders = [...new Set([folder, folder.toLowerCase(), cap(folder)])];
+    const names = [...new Set([
+        name, name.toLowerCase(), cap(name),
+        name.replace(new RegExp('^' + folder + '_', 'i'), ''),
+        folder.toUpperCase() + '_' + name
+    ])];
+    const exts = [...new Set([ext, ext.toUpperCase(), '.png', '.jpg', '.jpeg', '.webp', '.gif'])];
+
+    const out = [];
+    const add = (f, n, e) => {
+        const url = (base ? base + '/' : '') + (f ? f + '/' : '') + n + e;
+        if (url !== clean && !out.includes(url)) out.push(url);
+    };
+    names.forEach(n => add(folder, n, ext));              // 1) mismo folder y extensión, otro nombre
+    folders.forEach(f => names.forEach(n => add(f, n, ext))); // 2) otras mayúsculas de carpeta
+    exts.forEach(e => names.forEach(n => add(folder, n, e)));  // 3) otras extensiones
+    return out.slice(0, 30);
+};
+
+window.gymImgFix = function(img) {
+    if (!img.dataset.gymOrig) img.dataset.gymOrig = img.getAttribute('src') || '';
+    const orig = img.dataset.gymOrig;
+    if (!img.__gymC) {
+        img.__gymC = (window.__gymImgOk[orig] ? [window.__gymImgOk[orig]] : []).concat(window.gymImgCandidates(orig));
+        img.__gymI = 0;
+        img.onload = function() { if (img.src && !img.src.startsWith('data:')) window.__gymImgOk[orig] = img.getAttribute('src'); };
+    }
+    if (img.__gymI < img.__gymC.length) {
+        img.src = img.__gymC[img.__gymI++];
+    } else {
+        img.onerror = null;
+        img.onload = null;
+        img.src = window.GYM_IMG_PLACEHOLDER;
+    }
+};
+
+// ==========================================
 // INICIALIZACIÓN Y CARGA DESDE LA NUBE
 // ==========================================
 window.onload = async () => {
@@ -1319,7 +1374,7 @@ window.downloadPDF = function() {
                     <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 10px; background: ${themeColor};"></div>
 
                     <div style="width: 110px; height: 110px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 5px; margin-left: 8px; align-self: center;">
-                        <img src="${ex.img}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.onerror=null; this.src='${fallbackBase64}';" />
+                        <img src="${ex.img}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="gymImgFix(this)" />
                     </div>
                     
                     <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
@@ -1461,7 +1516,7 @@ window.openExerciseModal = function(dayIndex, exerciseIndex) {
                 
                 <!-- IMAGEN DEL EJERCICIO -->
                 <div class="w-full bg-white rounded-2xl p-4 flex justify-center items-center border-2 shadow-[0_0_20px_rgba(255,255,255,0.05)]" style="border-color: ${effColor};">
-                    <img src="${ex.img}" class="w-full max-h-56 object-contain mix-blend-multiply" onerror="this.onerror=null; this.src='${fallbackBase64}';" />
+                    <img src="${ex.img}" class="w-full max-h-56 object-contain mix-blend-multiply" onerror="gymImgFix(this)" />
                 </div>
                 
                 <div class="text-center w-full">
@@ -1931,7 +1986,7 @@ window.filterExerciseOptions = function(query) {
             return `
             <div onclick="selectExerciseOption('${name}', '${ex.img}', '${ex.desc.replace(/'/g, "\\'")}')" class="p-3 hover:bg-zinc-800 cursor-pointer flex items-center gap-4 border-b border-zinc-800 last:border-0 transition-colors group">
                 <div class="w-14 h-14 bg-white rounded-lg p-1 shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <img src="${ex.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="this.src='ejercicios/default.png'" />
+                    <img src="${ex.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="gymImgFix(this)" />
                 </div>
                 <span class="text-sm font-bold text-white drop-shadow-md">${name}</span>
             </div>`;
@@ -2052,7 +2107,7 @@ window.filterEditExerciseOptions = function(query) {
             return `
             <div onclick="selectEditExerciseOption('${name}', '${ex.img}', '${ex.desc.replace(/'/g, "\\'")}')" class="p-3 hover:bg-zinc-800 cursor-pointer flex items-center gap-4 border-b border-zinc-800 last:border-0 transition-colors group">
                 <div class="w-14 h-14 bg-white rounded-lg p-1 shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <img src="${ex.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="this.src='ejercicios/default.png'" />
+                    <img src="${ex.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="gymImgFix(this)" />
                 </div>
                 <span class="text-sm font-bold text-white drop-shadow-md">${name}</span>
             </div>`;
@@ -2361,7 +2416,7 @@ function renderClientPortal() {
                           ${d.exercises.map((ex, exIdx) => `
                           <div onclick="openExerciseModal(${dIdx}, ${exIdx})" class="cursor-pointer bg-[#050505] p-4 rounded-xl flex gap-4 border border-zinc-800/80 hover:border-zinc-500 transition group items-center relative overflow-hidden">
                               <div class="w-28 h-20 rounded-lg bg-white flex items-center justify-center border u-theme-border-soft shrink-0 overflow-hidden shadow-inner p-1">
-                                  <img src="${ex.img}" alt="${ex.name}" class="w-full h-full object-contain mix-blend-multiply" onerror="this.onerror=null; this.src='${fallbackBase64}';"/>
+                                  <img src="${ex.img}" alt="${ex.name}" class="w-full h-full object-contain mix-blend-multiply" onerror="gymImgFix(this)"/>
                               </div>
                               <div class="flex-1 flex flex-col justify-center gap-2">
                                   <div class="text-xs font-bold text-white uppercase drop-shadow-md transition">${exIdx + 1}. ${ex.name}</div>
@@ -2978,7 +3033,7 @@ window.openMuscleFolder = function(muscleGroup, colorHex) {
 
                 <div onclick="viewExerciseDetails('${safeName}', '${safeImg}', '${safeDesc}', '${colorHex}')" class="w-full flex-1 flex flex-col items-center justify-center gap-2 cursor-pointer pt-3">
                     <div class="w-14 h-14 bg-white rounded-lg p-1 shrink-0 flex items-center justify-center border border-zinc-200 shadow-inner group-hover:scale-105 transition-transform">
-                        <img src="${exData.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="this.src='ejercicios/default.png'" />
+                        <img src="${exData.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="gymImgFix(this)" />
                     </div>
                     <span class="text-[10px] font-bold text-white uppercase text-center leading-tight line-clamp-2" style="color: ${colorHex}; drop-shadow(0 0 2px ${colorHex}80);">${exName}</span>
                 </div>
@@ -3893,7 +3948,7 @@ window.openMuscleFolder = function(muscleGroup, colorHex) {
                 <!-- Contenedor clickeable para ver detalles -->
                 <div onclick="viewExerciseDetails('${safeName}', '${safeImg}', '${safeDesc}', '${colorHex}')" class="flex-1 flex items-center gap-4 cursor-pointer">
                     <div class="w-16 h-16 bg-white rounded-lg p-1 shrink-0 flex items-center justify-center border border-zinc-200 shadow-inner group-hover:scale-105 transition-transform">
-                        <img src="${exData.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="this.src='ejercicios/default.png'" />
+                        <img src="${exData.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="gymImgFix(this)" />
                     </div>
                     <div class="flex-1 flex flex-col justify-center">
                         <span class="text-sm font-bold text-white uppercase drop-shadow-md group-hover:text-zinc-200 transition">${exName}</span>
@@ -3947,7 +4002,7 @@ window.viewExerciseDetails = function(name, img, desc, colorHex) {
                 
                 <!-- IMAGEN -->
                 <div class="w-full bg-white rounded-2xl p-4 flex justify-center items-center border-2 shadow-[0_0_20px_rgba(255,255,255,0.05)]" style="border-color: ${colorHex};">
-                    <img src="${img}" class="w-full max-h-48 object-contain mix-blend-multiply" onerror="this.onerror=null; this.src='${fallbackBase64}';" />
+                    <img src="${img}" class="w-full max-h-48 object-contain mix-blend-multiply" onerror="gymImgFix(this)" />
                 </div>
                 
                 <h3 class="text-xl md:text-2xl font-black text-white uppercase tracking-wider drop-shadow-md mt-2" style="color: ${colorHex};">${name}</h3>
@@ -4075,7 +4130,7 @@ window.openMuscleFolder = function(muscleGroup, colorHex) {
                 <!-- Área clickeable para EDITAR ejercicio -->
                 <div onclick="editGlobalExerciseModal('${safeName}', '${muscleGroup}', '${colorHex}')" class="flex-1 flex items-center gap-4 cursor-pointer">
                     <div class="w-16 h-16 bg-white rounded-lg p-1 shrink-0 flex items-center justify-center border border-zinc-200 shadow-inner group-hover:scale-105 transition-transform">
-                        <img src="${exData.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="this.src='ejercicios/default.png'" />
+                        <img src="${exData.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="gymImgFix(this)" />
                     </div>
                     <div class="flex-1 flex flex-col justify-center">
                         <span class="text-sm font-bold text-white uppercase drop-shadow-md group-hover:text-zinc-200 transition">${exName}</span>
@@ -4122,7 +4177,7 @@ window.editGlobalExerciseModal = function(exName, muscleGroup, colorHex) {
                 <!-- Vista previa de la imagen (AUMENTADA DE TAMAÑO) -->
                 <div class="flex justify-center mb-4">
                     <div class="w-40 h-40 md:w-48 md:h-48 bg-white rounded-xl p-2 flex items-center justify-center border-2 shadow-inner transition-transform hover:scale-105" style="border-color: ${colorHex}50;">
-                        <img src="${exData.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="this.src='ejercicios/default.png'" />
+                        <img src="${exData.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="gymImgFix(this)" />
                     </div>
                 </div>
                 
@@ -5089,7 +5144,7 @@ window.renderTemplateEditor = function() {
                         ${dayObj.exercises.length === 0 ? `<div class="text-sm text-zinc-500 font-medium italic text-center py-4 border border-dashed border-zinc-800 rounded-xl">Aún no hay ejercicios en este día.</div>` : ''}
                         ${dayObj.exercises.map((ex, eIdx) => `
                             <article class="tpl-row">
-                                <div class="tpl-img"><img src="${ex.img}" onerror="this.src='ejercicios/default.png'"></div>
+                                <div class="tpl-img"><img src="${ex.img}" onerror="gymImgFix(this)"></div>
                                 <div class="tpl-name">${ex.name}</div>
                                 <div class="tpl-stats">
                                     <div class="tpl-stat tpl-stat-main"><span>Series</span><b>${tplVal(ex.sets)}</b></div>
@@ -5195,7 +5250,7 @@ window.openFolderExercisesForTemplate = function(dayIdx, muscleGroup, colorHex) 
                     const exData = exerciseDetails[exName];
                     return `
                     <div class="bg-[#0a0a0a] border border-zinc-800 rounded-xl p-2 flex items-center gap-3">
-                        <div class="w-12 h-12 bg-white rounded-lg p-1 shrink-0"><img src="${exData.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="this.src='ejercicios/default.png'"></div>
+                        <div class="w-12 h-12 bg-white rounded-lg p-1 shrink-0"><img src="${exData.img}" class="w-full h-full object-contain mix-blend-multiply" onerror="gymImgFix(this)"></div>
                         <div class="flex-1 text-xs font-bold text-white uppercase">${exName}</div>
                         <!-- BOTÓN + PARA AÑADIR -->
                         <button onclick="configureExerciseForTemplate(${dayIdx}, '${safeName}')" class="w-10 h-10 flex shrink-0 items-center justify-center bg-zinc-800 hover:bg-white hover:text-black rounded-lg text-zinc-400 transition shadow-md">
